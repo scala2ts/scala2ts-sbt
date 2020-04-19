@@ -1,5 +1,5 @@
 /**
- * scala-ts-core SBT build file
+ * scala2ts-sbt SBT build file
  */
 
 import ReleaseTransformations._
@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
     sbtPlugin := true,
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
-      "2.10.7",
+      // "2.10.7",
       scalaVersion.value
     ),
     sbtVersion in pluginCrossBuild := {
@@ -21,6 +21,9 @@ lazy val root = (project in file("."))
         case "2.12" => "1.3.10"
       }
     },
+    libraryDependencies ++= Seq(
+      "com.github.scala2ts" %% "scala2ts-core" % "1.0.0-SNAPSHOT"
+    ),
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
