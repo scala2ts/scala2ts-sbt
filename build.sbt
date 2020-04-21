@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
     sbtPlugin := true,
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
-      // "2.10.7",
+      // TODO: "2.10.7"
       scalaVersion.value
     ),
     sbtVersion in pluginCrossBuild := {

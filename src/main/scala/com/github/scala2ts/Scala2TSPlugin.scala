@@ -5,7 +5,6 @@ import sbt.Keys._
 import sbt.{Def, _}
 
 import scala.util.matching.Regex
-
 import com.github.scala2ts.configuration.Configuration.Args._
 
 object Scala2TSPlugin extends AutoPlugin {
@@ -14,6 +13,10 @@ object Scala2TSPlugin extends AutoPlugin {
   object autoImport {
     val enableScala2TS        = settingKey[Boolean](
       "Enable the Scala2TS Compiler Plugin and Compilation"
+    )
+
+    val outputDirectory       = settingKey[String](
+      "Path to the desired output directory"
     )
 
     val tsIncludeFiles        = settingKey[Seq[Regex]](
@@ -27,6 +30,30 @@ object Scala2TSPlugin extends AutoPlugin {
     )
     val tsExcludeTypes        = settingKey[Seq[Regex]](
       "Types to exclude in compilation"
+    )
+
+    val indentString          = settingKey[String](
+      "Indent string (tab/space) to use in the output file(s)"
+    )
+    val typeNamePrefix        = settingKey[String](
+      "A prefix to use in type naming"
+    )
+    val typeNameSuffix        = settingKey[String](
+      "A suffix to use in type naming"
+    )
+
+    val emitInterfaces        = settingKey[Boolean](
+      "Should emit Typescript interfaces"
+    )
+    val emitClasses           = settingKey[Boolean](
+      "Should emit Typescript classes"
+    )
+
+    val optionToNullable      = settingKey[Boolean](
+      "Convert Option types to union with null"
+    )
+    val optionToUndefined     = settingKey[Boolean](
+      "Convert Option types to union with undefined"
     )
   }
 
@@ -76,16 +103,70 @@ object Scala2TSPlugin extends AutoPlugin {
             regex => regex.toString
           )
 
+          val indentStringArgs: Seq[String] = transformArg[String](
+            indentStringArg,
+            indentString.?.value,
+            identity
+          )
+
+          val typeNamePrefixArgs: Seq[String] = transformArg[String](
+            typeNamePrefixArg,
+            typeNamePrefix.?.value,
+            identity
+          )
+
+          val typeNameSuffixArgs: Seq[String] = transformArg[String](
+            typeNameSuffixArg,
+            typeNameSuffix.?.value,
+            identity
+          )
+
+          val emitInterfacesArgs: Seq[String] = transformArg[Boolean](
+            emitInterfacesArg,
+            emitInterfaces.?.value,
+            b => s"$b"
+          )
+
+          val emitClassesArgs: Seq[String] = transformArg[Boolean](
+            emitClassesArg,
+            emitClasses.?.value,
+            b => s"$b"
+          )
+
+          val optionToNullableArgs: Seq[String] = transformArg[Boolean](
+            optionToNullableArg,
+            optionToNullable.?.value,
+            b => s"$b"
+          )
+
+          val optionToUndefinedArgs: Seq[String] = transformArg[Boolean](
+            optionToUndefinedArg,
+            optionToUndefined.?.value,
+            b => s"$b"
+          )
+
           includeFilesArgs ++
           excludeFilesArgs ++
           includeTypesArgs ++
-          excludeTypesArgs
+          excludeTypesArgs ++
+          indentStringArgs ++
+          typeNamePrefixArgs ++
+          typeNameSuffixArgs ++
+          emitInterfacesArgs ++
+          emitClassesArgs ++
+          optionToNullableArgs ++
+          optionToUndefinedArgs
         } else {
           Seq(s"-Xplugin-disable:$pluginName")
         }
       }
     ))
 
+  private[this] def transformArg[T](namespace: String, arg: Option[T], fn: T => String): Seq[String] =
+    arg match {
+      case Some(value) => Seq(s"-P:$pluginName:$namespace${fn(value)}")
+      case None => Seq.empty
+    }
 
   /**
    * Transform the option into the correct compiler plugin command line string
