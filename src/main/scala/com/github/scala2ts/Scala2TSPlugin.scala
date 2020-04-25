@@ -6,16 +6,18 @@ import sbt.{Def, _}
 
 import scala.util.matching.Regex
 import com.github.scala2ts.configuration.Configuration.Args._
+import com.github.scala2ts.configuration.DateMapping.DateMapping
+import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
 
 object Scala2TSPlugin extends AutoPlugin {
   private[this] val pluginName: String = "scala2ts"
 
   object autoImport {
-    val enableScala2TS        = settingKey[Boolean](
+    val tsEnable              = settingKey[Boolean](
       "Enable the Scala2TS Compiler Plugin and Compilation"
     )
 
-    val outputDirectory       = settingKey[String](
+    val tsOutputDirectory     = settingKey[String](
       "Path to the desired output directory"
     )
 
@@ -32,28 +34,38 @@ object Scala2TSPlugin extends AutoPlugin {
       "Types to exclude in compilation"
     )
 
-    val indentString          = settingKey[String](
-      "Indent string (tab/space) to use in the output file(s)"
-    )
-    val typeNamePrefix        = settingKey[String](
+    val tsNamePrefix          = settingKey[String](
       "A prefix to use in type naming"
     )
-    val typeNameSuffix        = settingKey[String](
+    val tsNameSuffix          = settingKey[String](
       "A suffix to use in type naming"
     )
 
-    val emitInterfaces        = settingKey[Boolean](
-      "Should emit Typescript interfaces"
+    val tsDateMapping         = settingKey[DateMapping](
+      "How to transform Scala Date-types into Typescript"
     )
-    val emitClasses           = settingKey[Boolean](
-      "Should emit Typescript classes"
+    val tsLongDoubleMapping   = settingKey[LongDoubleMapping](
+      "How to transform Long(s) and Double(s) into Typescript"
     )
 
-    val optionToNullable      = settingKey[Boolean](
-      "Convert Option types to union with null"
+    val tsOutDir              = settingKey[String](
+      "Directory to emit Typescript file(s)"
     )
-    val optionToUndefined     = settingKey[Boolean](
-      "Convert Option types to union with undefined"
+    val tsOutFileName         = settingKey[String](
+      "What to name the resulting Typescript file"
+    )
+
+    val tsPackageJsonName     = settingKey[String](
+      "The name to use in package.json"
+    )
+    val tsPackageJsonVersion  = settingKey[String](
+      "The version to use in package.json"
+    )
+    val tsPackageJsonTypes    = settingKey[String](
+      "The path to types to use in package.json"
+    )
+    val tsPackageJsonRegistry = settingKey[String](
+      "The url to use for the publishConfig in package.json"
     )
   }
 
@@ -64,8 +76,8 @@ object Scala2TSPlugin extends AutoPlugin {
       autoCompilerPlugins := true,
       addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.0-SNAPSHOT"),
     ) ++ inConfig(Compile)(Seq(
-      enableScala2TS := {
-        enableScala2TS.??(false).value
+      tsEnable := {
+        tsEnable.??(false).value
       },
       tsIncludeFiles := {
         tsIncludeFiles.??(Seq()).value
@@ -81,7 +93,7 @@ object Scala2TSPlugin extends AutoPlugin {
       },
 
       scalacOptions ++= {
-        if (enableScala2TS.value) {
+        if (tsEnable.value) {
           val includeFilesArgs: Seq[String] = transformArgs[Regex](
             fileIncludesArg,
             tsIncludeFiles.value,
@@ -103,59 +115,77 @@ object Scala2TSPlugin extends AutoPlugin {
             regex => regex.toString
           )
 
-          val indentStringArgs: Seq[String] = transformArg[String](
-            indentStringArg,
-            indentString.?.value,
-            identity
-          )
-
           val typeNamePrefixArgs: Seq[String] = transformArg[String](
             typeNamePrefixArg,
-            typeNamePrefix.?.value,
+            tsNamePrefix.?.value,
             identity
           )
 
           val typeNameSuffixArgs: Seq[String] = transformArg[String](
             typeNameSuffixArg,
-            typeNameSuffix.?.value,
+            tsNameSuffix.?.value,
             identity
           )
 
-          val emitInterfacesArgs: Seq[String] = transformArg[Boolean](
-            emitInterfacesArg,
-            emitInterfaces.?.value,
-            b => s"$b"
+          val dateMappingArgs: Seq[String] = transformArg[DateMapping](
+            dateMappingArg,
+            tsDateMapping.?.value,
+            arg => s"${arg.id}",
           )
 
-          val emitClassesArgs: Seq[String] = transformArg[Boolean](
-            emitClassesArg,
-            emitClasses.?.value,
-            b => s"$b"
+          val longDoubleMappingArgs: Seq[String] = transformArg[LongDoubleMapping](
+            longDoubleMappingArg,
+            tsLongDoubleMapping.?.value,
+            arg => s"${arg.id}"
           )
 
-          val optionToNullableArgs: Seq[String] = transformArg[Boolean](
-            optionToNullableArg,
-            optionToNullable.?.value,
-            b => s"$b"
+          val outDirArgs: Seq[String] = transformArg[String](
+            outDirArg,
+            tsOutDir.?.value,
+            identity
           )
 
-          val optionToUndefinedArgs: Seq[String] = transformArg[Boolean](
-            optionToUndefinedArg,
-            optionToUndefined.?.value,
-            b => s"$b"
+          val outFileNameArgs: Seq[String] = transformArg[String](
+            outFileNameArg,
+            tsOutFileName.?.value,
+            identity
+          )
+
+          val packageJsonNameArgs: Seq[String] = transformArg[String](
+            packageJsonNameArg,
+            tsPackageJsonName.?.value,
+            identity
+          )
+          val packageJsonVersionArgs: Seq[String] = transformArg[String](
+            packageJsonVersionArg,
+            tsPackageJsonVersion.?.value,
+            identity
+          )
+          val packageJsonTypesArgs: Seq[String] = transformArg[String](
+            packageJsonTypesArg,
+            tsPackageJsonTypes.?.value,
+            identity
+          )
+          val packageJsonRegistryArgs: Seq[String] = transformArg[String](
+            packageJsonRegistryArg,
+            tsPackageJsonRegistry.?.value,
+            identity
           )
 
           includeFilesArgs ++
           excludeFilesArgs ++
           includeTypesArgs ++
           excludeTypesArgs ++
-          indentStringArgs ++
           typeNamePrefixArgs ++
           typeNameSuffixArgs ++
-          emitInterfacesArgs ++
-          emitClassesArgs ++
-          optionToNullableArgs ++
-          optionToUndefinedArgs
+          dateMappingArgs ++
+          longDoubleMappingArgs ++
+          outDirArgs ++
+          outFileNameArgs ++
+          packageJsonNameArgs ++
+          packageJsonVersionArgs ++
+          packageJsonTypesArgs ++
+          packageJsonRegistryArgs
         } else {
           Seq(s"-Xplugin-disable:$pluginName")
         }
