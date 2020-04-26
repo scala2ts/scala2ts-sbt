@@ -24,6 +24,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "com.github.scala2ts" %% "scala2ts-core" % "1.0.0-SNAPSHOT"
     ),
+    releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -38,21 +39,11 @@ lazy val root = (project in file("."))
       commitNextVersion,
       pushChanges
     ),
-    publishMavenStyle := true,
-    publishTo := {
-      val nexus = "https://oss.sonatype.org/"
-      if (isSnapshot.value)
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-    },
-    publishArtifact in Test := false,
     pomExtra :=
-      <url>https://github.com/scala2ts/scala2ts-sbt</url>
+      <url>https://www.github.com/scala2ts/scala2ts-sbt</url>
         <licenses>
           <license>
             <name>MIT</name>
-            <url>https://opensource.org/licenses/MIT</url>
             <distribution>repo</distribution>
           </license>
         </licenses>
@@ -64,7 +55,10 @@ lazy val root = (project in file("."))
           <developer>
             <id>halfmatthalfcat</id>
             <name>Matt Oliver</name>
-            <url>https://github.com/halfmatthalfcat</url>
+            <url>https://www.github.com/halfmatthalfcat</url>
           </developer>
-        </developers>
+        </developers>,
+    publishMavenStyle := true,
+    publishTo := sonatypePublishToBundle.value,
+    resolvers ++= Seq(DefaultMavenRepository)
   )
