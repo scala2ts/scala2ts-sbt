@@ -3,14 +3,23 @@ package com.github.scala2ts
 import sbt.AutoPlugin
 import sbt.Keys._
 import sbt.{Def, _}
+import java.io.File
+import java.nio.file.{Files, StandardCopyOption}
 
 import scala.util.matching.Regex
 import com.github.scala2ts.configuration.Configuration.Args._
 import com.github.scala2ts.configuration.DateMapping.DateMapping
 import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+import com.typesafe.sbt.jse.JsEngineImport.JsEngineKeys
+import com.typesafe.sbt.jse.SbtJsTask
+import com.typesafe.sbt.web.SbtWeb
+
+import scala.concurrent.duration._
 
 object Scala2TSPlugin extends AutoPlugin {
   private[this] val pluginName: String = "scala2ts"
+  override def requires: SbtJsTask.type = SbtJsTask
+  override def trigger = AllRequirements
 
   object autoImport {
     val tsEnable              = settingKey[Boolean](
@@ -67,130 +76,169 @@ object Scala2TSPlugin extends AutoPlugin {
     val tsPackageJsonRegistry = settingKey[String](
       "The url to use for the publishConfig in package.json"
     )
+
+    val tsNpmPublish          = taskKey[Unit](
+      "Publish typescript files to an npm registry"
+    )
   }
 
   import autoImport._
+  import SbtWeb.autoImport._
+  import WebKeys._
+
+  private[this] lazy val generalSettings: Seq[Def.Setting[_]] = Seq(
+    autoCompilerPlugins := true,
+    addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.0-SNAPSHOT"),
+    JsEngineKeys.parallelism := 1
+  )
+
+  private[this] lazy val compilerPluginSettings: Seq[Def.Setting[_]] = inConfig(Compile)(Seq(
+    tsEnable := {
+      tsEnable.??(false).value
+    },
+    tsIncludeFiles := {
+      tsIncludeFiles.??(Seq()).value
+    },
+    tsExcludeFiles := {
+      tsExcludeFiles.??(Seq()).value
+    },
+    tsIncludeTypes := {
+      tsIncludeTypes.??(Seq()).value
+    },
+    tsExcludeTypes := {
+      tsExcludeTypes.??(Seq()).value
+    },
+
+    scalacOptions ++= {
+      if (tsEnable.value) {
+        val includeFilesArgs: Seq[String] = transformArgs[Regex](
+          fileIncludesArg,
+          tsIncludeFiles.value,
+          regex => regex.toString
+        )
+        val excludeFilesArgs: Seq[String] = transformArgs[Regex](
+          fileExcludesArg,
+          tsExcludeFiles.value,
+          regex => regex.toString
+        )
+        val includeTypesArgs: Seq[String] = transformArgs[Regex](
+          typeIncludesArg,
+          tsIncludeTypes.value,
+          regex => regex.toString
+        )
+        val excludeTypesArgs: Seq[String] = transformArgs[Regex](
+          typeExcludesArg,
+          tsExcludeTypes.value,
+          regex => regex.toString
+        )
+
+        val typeNamePrefixArgs: Seq[String] = transformArg[String](
+          typeNamePrefixArg,
+          tsNamePrefix.?.value,
+          identity
+        )
+
+        val typeNameSuffixArgs: Seq[String] = transformArg[String](
+          typeNameSuffixArg,
+          tsNameSuffix.?.value,
+          identity
+        )
+
+        val dateMappingArgs: Seq[String] = transformArg[DateMapping](
+          dateMappingArg,
+          tsDateMapping.?.value,
+          arg => s"${arg.id}",
+        )
+
+        val longDoubleMappingArgs: Seq[String] = transformArg[LongDoubleMapping](
+          longDoubleMappingArg,
+          tsLongDoubleMapping.?.value,
+          arg => s"${arg.id}"
+        )
+
+        val outDirArgs: Seq[String] = transformArg[String](
+          outDirArg,
+          tsOutDir.?.value,
+          identity
+        )
+
+        val outFileNameArgs: Seq[String] = transformArg[String](
+          outFileNameArg,
+          tsOutFileName.?.value,
+          identity
+        )
+
+        val packageJsonNameArgs: Seq[String] = transformArg[String](
+          packageJsonNameArg,
+          tsPackageJsonName.?.value,
+          identity
+        )
+        val packageJsonVersionArgs: Seq[String] = transformArg[String](
+          packageJsonVersionArg,
+          tsPackageJsonVersion.?.value,
+          identity
+        )
+        val packageJsonTypesArgs: Seq[String] = transformArg[String](
+          packageJsonTypesArg,
+          tsPackageJsonTypes.?.value,
+          identity
+        )
+        val packageJsonRegistryArgs: Seq[String] = transformArg[String](
+          packageJsonRegistryArg,
+          tsPackageJsonRegistry.?.value,
+          identity
+        )
+
+        includeFilesArgs ++
+        excludeFilesArgs ++
+        includeTypesArgs ++
+        excludeTypesArgs ++
+        typeNamePrefixArgs ++
+        typeNameSuffixArgs ++
+        dateMappingArgs ++
+        longDoubleMappingArgs ++
+        outDirArgs ++
+        outFileNameArgs ++
+        packageJsonNameArgs ++
+        packageJsonVersionArgs ++
+        packageJsonTypesArgs ++
+        packageJsonRegistryArgs
+      } else {
+        Seq(s"-Xplugin-disable:$pluginName")
+      }
+    }
+  ))
+
+  private[this] lazy val publishProjectSettings: Seq[Def.Setting[_]] = Seq(
+    tsNpmPublish := {
+      /**
+       * It seems like the current implementation of js-engine cannot read from JARs,
+       * so we need to stream our script from the jar into a temp file and then pass
+       * that to js-engine
+       */
+      val tmpScriptFile: File = File.createTempFile("js-script", "")
+      Files.copy(
+        Scala2TSPlugin.getClass.getClassLoader.getResourceAsStream("publish.js"),
+        tmpScriptFile.toPath,
+        StandardCopyOption.REPLACE_EXISTING
+      )
+
+      SbtJsTask.executeJs(
+        state.value,
+        JsEngineKeys.engineType.value,
+        None,
+        (nodeModuleDirectories in Plugin).value.map(_.getAbsoluteFile.toString),
+        tmpScriptFile,
+        Seq(),
+        30.seconds
+      )
+    }
+  )
 
   override lazy val projectSettings: Seq[Def.Setting[_]] =
-    Seq(
-      autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.0-SNAPSHOT"),
-    ) ++ inConfig(Compile)(Seq(
-      tsEnable := {
-        tsEnable.??(false).value
-      },
-      tsIncludeFiles := {
-        tsIncludeFiles.??(Seq()).value
-      },
-      tsExcludeFiles := {
-        tsExcludeFiles.??(Seq()).value
-      },
-      tsIncludeTypes := {
-        tsIncludeTypes.??(Seq()).value
-      },
-      tsExcludeTypes := {
-        tsExcludeTypes.??(Seq()).value
-      },
-
-      scalacOptions ++= {
-        if (tsEnable.value) {
-          val includeFilesArgs: Seq[String] = transformArgs[Regex](
-            fileIncludesArg,
-            tsIncludeFiles.value,
-            regex => regex.toString
-          )
-          val excludeFilesArgs: Seq[String] = transformArgs[Regex](
-            fileExcludesArg,
-            tsExcludeFiles.value,
-            regex => regex.toString
-          )
-          val includeTypesArgs: Seq[String] = transformArgs[Regex](
-            typeIncludesArg,
-            tsIncludeTypes.value,
-            regex => regex.toString
-          )
-          val excludeTypesArgs: Seq[String] = transformArgs[Regex](
-            typeExcludesArg,
-            tsExcludeTypes.value,
-            regex => regex.toString
-          )
-
-          val typeNamePrefixArgs: Seq[String] = transformArg[String](
-            typeNamePrefixArg,
-            tsNamePrefix.?.value,
-            identity
-          )
-
-          val typeNameSuffixArgs: Seq[String] = transformArg[String](
-            typeNameSuffixArg,
-            tsNameSuffix.?.value,
-            identity
-          )
-
-          val dateMappingArgs: Seq[String] = transformArg[DateMapping](
-            dateMappingArg,
-            tsDateMapping.?.value,
-            arg => s"${arg.id}",
-          )
-
-          val longDoubleMappingArgs: Seq[String] = transformArg[LongDoubleMapping](
-            longDoubleMappingArg,
-            tsLongDoubleMapping.?.value,
-            arg => s"${arg.id}"
-          )
-
-          val outDirArgs: Seq[String] = transformArg[String](
-            outDirArg,
-            tsOutDir.?.value,
-            identity
-          )
-
-          val outFileNameArgs: Seq[String] = transformArg[String](
-            outFileNameArg,
-            tsOutFileName.?.value,
-            identity
-          )
-
-          val packageJsonNameArgs: Seq[String] = transformArg[String](
-            packageJsonNameArg,
-            tsPackageJsonName.?.value,
-            identity
-          )
-          val packageJsonVersionArgs: Seq[String] = transformArg[String](
-            packageJsonVersionArg,
-            tsPackageJsonVersion.?.value,
-            identity
-          )
-          val packageJsonTypesArgs: Seq[String] = transformArg[String](
-            packageJsonTypesArg,
-            tsPackageJsonTypes.?.value,
-            identity
-          )
-          val packageJsonRegistryArgs: Seq[String] = transformArg[String](
-            packageJsonRegistryArg,
-            tsPackageJsonRegistry.?.value,
-            identity
-          )
-
-          includeFilesArgs ++
-          excludeFilesArgs ++
-          includeTypesArgs ++
-          excludeTypesArgs ++
-          typeNamePrefixArgs ++
-          typeNameSuffixArgs ++
-          dateMappingArgs ++
-          longDoubleMappingArgs ++
-          outDirArgs ++
-          outFileNameArgs ++
-          packageJsonNameArgs ++
-          packageJsonVersionArgs ++
-          packageJsonTypesArgs ++
-          packageJsonRegistryArgs
-        } else {
-          Seq(s"-Xplugin-disable:$pluginName")
-        }
-      }
-    ))
+    generalSettings ++
+    compilerPluginSettings ++
+    publishProjectSettings
 
   private[this] def transformArg[T](namespace: String, arg: Option[T], fn: T => String): Seq[String] =
     arg match {

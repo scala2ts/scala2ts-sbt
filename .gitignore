@@ -101,3 +101,8 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Files produced by SbtWeb
+package.json
+package-lock.json
+node_modules

@@ -5,6 +5,7 @@
 import ReleaseTransformations._
 
 lazy val root = (project in file("."))
+  .enablePlugins(SbtWeb)
   .settings(
     name := "scala2ts-sbt",
     organization := "com.github.scala2ts",
@@ -21,8 +22,12 @@ lazy val root = (project in file("."))
         case "2.12" => "1.3.10"
       }
     },
+    addSbtPlugin("com.typesafe.sbt" %% "sbt-js-engine" % "1.2.3"),
     libraryDependencies ++= Seq(
-      "com.github.scala2ts" %% "scala2ts-core" % "1.0.0-SNAPSHOT"
+      "com.github.scala2ts" %% "scala2ts-core"      % "1.0.0-SNAPSHOT",
+      "org.webjars"         %  "npm"                % "5.0.0-2",
+      "org.webjars.npm"     %  "typescript"         % "3.8.3",
+      "org.webjars.npm"     %  "tar-fs"             % "1.16.3"
     ),
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
