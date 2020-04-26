@@ -35,6 +35,9 @@ lazy val root = (project in file("."))
   )
 ```
 
+No need to mess with running any SBT tasks, once you run `compile` the Typescript interfaces
+are emitted to your `outDir`.
+
 ## Configuration
 
 All configuration options are prefixed with `ts`.
