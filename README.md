@@ -6,6 +6,7 @@ takes a variety of Scala constructs and emits Typescript-compliant interfaces.
 Currently handles:
 * Case Classes
 * Sealed Trait Hierarchies
+* Generics
 * Primitives
 * Collections/Map
 * java.time.*
