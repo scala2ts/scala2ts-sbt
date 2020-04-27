@@ -59,3 +59,70 @@ All configuration options are prefixed with `ts`.
 |PackageJsonVersion| |The version of the project in package.json|
 |PackageJsonTypes| |The path to the types file in package.json|
 |PackageJsonRegistry| |An external NPM registry url|
+
+## Examples
+
+### Include only certain packages to compile
+
+A `Seq` of Regexes can be passed to `tsIncludeTypes` to include a certain set of packages
+to be transpiled by `scala2ts`.
+
+```sbt
+// build.sbt
+
+lazy val root = (project in file("."))
+  .enablePlugins(Scala2TSPlugin)
+  .settings(
+    tsEnable := true,
+    tsIncludeTypes := Seq(
+      "com\\.some\\.package".r,
+      "org\\.some\\.other\\.package".r
+    )
+  )
+```
+
+### Emit typescript to SBT's build directory
+
+One can emit the transpiled typescript anywhere, but usually it's emitted to SBT's build directory.
+
+```sbt
+// build.sbt
+
+lazy val root = (project in file("."))
+  .enablePlugins(Scala2TSPlugin)
+  .settings(
+    tsEnable := true,
+    tsIncludeTypes := Seq(
+      "com\\.some\\.package".r,
+      "org\\.some\\.other\\.package".r
+    ),
+    tsOutDir := {
+      val targetPath = (target in Compile).value.getPath
+    
+      s"${targetPath}/typescript"
+    } 
+  )
+```
+
+### Include a package.json with the emitted Typescript
+
+```sbt
+// build.sbt
+
+lazy val root = (project in file("."))
+  .enablePlugins(Scala2TSPlugin)
+  .settings(
+    tsEnable := true,
+    tsIncludeTypes := Seq(
+      "com\\.some\\.package".r,
+      "org\\.some\\.other\\.package".r
+    ),
+    tsOutDir := {
+      val targetPath = (target in Compile).value.getPath
+    
+      s"${targetPath}/typescript"
+    },
+    tsPackageJsonName := "@yourcompany/types",
+    tsPackageJsonVersion := version.value,
+  )
+```
