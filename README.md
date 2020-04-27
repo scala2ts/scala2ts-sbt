@@ -46,6 +46,7 @@ All configuration options are prefixed with `ts`.
 |**Option**|**Default**|**Description**|
 |---|---|---|
 |Enable|false|Enable the plugin|
+|Debug|false|Enable debug logging|
 |IncludeFiles| |Files to include in compilation|
 |ExcludeFiles| |Files to exclude in compilation|
 |IncludeTypes| |Types/Packages to include in compilation| 

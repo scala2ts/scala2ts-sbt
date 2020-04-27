@@ -16,6 +16,9 @@ object Scala2TSPlugin extends AutoPlugin {
     val tsEnable              = settingKey[Boolean](
       "Enable the Scala2TS Compiler Plugin and Compilation"
     )
+    val tsDebug               = settingKey[Boolean](
+      "Enable debug logging during compilation"
+    )
 
     val tsOutputDirectory     = settingKey[String](
       "Path to the desired output directory"
@@ -79,6 +82,9 @@ object Scala2TSPlugin extends AutoPlugin {
       tsEnable := {
         tsEnable.??(false).value
       },
+      tsDebug := {
+        tsDebug.??(false).value
+      },
       tsIncludeFiles := {
         tsIncludeFiles.??(Seq()).value
       },
@@ -94,6 +100,12 @@ object Scala2TSPlugin extends AutoPlugin {
 
       scalacOptions ++= {
         if (tsEnable.value) {
+          val debugArgs: Seq[String] = transformArg[Boolean](
+            debugArg,
+            tsDebug.?.value,
+            b => b.toString
+          )
+
           val includeFilesArgs: Seq[String] = transformArgs[Regex](
             fileIncludesArg,
             tsIncludeFiles.value,
@@ -172,6 +184,7 @@ object Scala2TSPlugin extends AutoPlugin {
             identity
           )
 
+          debugArgs ++
           includeFilesArgs ++
           excludeFilesArgs ++
           includeTypesArgs ++
