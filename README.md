@@ -11,20 +11,21 @@ Currently handles:
 * Collections/Map
 * java.time.*
 * UUID
+* Enums (Scala and Enumeratum's `EnumEntry`)
+  * Only supporting plain Enumeratum sealed trait enums without any name-trait mixins.
 
 ## Support
 
 |**Version**|**SBT**|**Scala**|
 |---|---|---|
-|1.0.1|1.x|2.13<br />2.12<br />2.11|
-|1.0.0|1.x|2.13<br />2.12<br />2.11|
+|1.0.x|1.x|2.13<br />2.12<br />2.11|
 
 ## Usage
 
 ```sbt
 // project/plugins.sbt
 
-addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.1")
+addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.2")
 ```
 
 ```sbt
