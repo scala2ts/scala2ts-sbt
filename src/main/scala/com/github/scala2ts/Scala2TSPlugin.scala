@@ -77,7 +77,7 @@ object Scala2TSPlugin extends AutoPlugin {
   override lazy val projectSettings: Seq[Def.Setting[_]] =
     Seq(
       autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.1"),
+      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.2"),
     ) ++ inConfig(Compile)(Seq(
       tsEnable := {
         tsEnable.??(false).value
