@@ -25,7 +25,7 @@ Currently handles:
 ```sbt
 // project/plugins.sbt
 
-addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.3")
+addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.4")
 ```
 
 ```sbt
