@@ -1,7 +1,7 @@
 # scala2ts-sbt
 
 This is the SBT-based plugin for the `scala2ts` project. Scala2TS is a Scala to Typescript transpiler that
-takes a variety of Scala constructs and emits Typescript-compliant interfaces.
+takes a variety of Scala constructs and emits Typescript-compliant code.
 
 Currently handles:
 * Case Classes
@@ -25,7 +25,7 @@ Currently handles:
 ```sbt
 // project/plugins.sbt
 
-addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.4")
+addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.5")
 ```
 
 ```sbt
@@ -40,6 +40,21 @@ lazy val root = (project in file("."))
 
 No need to mess with running any SBT tasks, once you run `compile` the Typescript interfaces
 are emitted to your `outDir`.
+
+## Transpiling The Emitted Typescript (tsTranspile)
+
+The `scala2ts-core` compiler plugin emits a Typescript implementation file (`.ts`) versus a declaration file (`.d.ts`).
+
+A declaration file can be consumed by any Typescript project with relative ease while consuming an implementation file,
+usually through an npm module, causes issues when compiling your project. This is because most frontend build tooling
+expects npm modules to be transplied and in vanilla Javascript (unless you tune your bundlers correctly).
+
+This plugin ships with the ability to transpile the emitted implementation file using the shipped WebJar typescript
+compiler using the `tsTranspile` task. You shouldn't need to have `tsc` or `node` installed locally for this to work
+as it leverages the `sbt-js-engine` plugin (and will fallback to the Trireme node runtime if `node` is not found locally)
+
+This task produces a transpiled `.js` file as well as a `.d.ts` declaration file that is then safe to publish or consume
+locally in any Typescript or Javascript project.
 
 ## Configuration
 
@@ -57,8 +72,8 @@ All configuration options are prefixed with `ts`.
 |NameSuffix| |A suffix to use in TS interface names|
 |DateMapping|AsDate|How to map Scala Dates to TS|
 |LongDoubleMapping|AsString|How to map Scala Longs and Doubles to TS|
-|OutDir| |Where to output files created during compilation|
-|OutFileName|index.d.ts|The name of the TS file to produce|
+|OutDir|target/typescript|Where to output files created during compilation|
+|OutFileName|index.ts|The name of the TS file to produce|
 |PackageJsonName| |The name of the project in package.json (must be supplied to emit package.json)|
 |PackageJsonVersion| |The version of the project in package.json|
 |PackageJsonTypes| |The path to the types file in package.json|
