@@ -22,7 +22,7 @@ lazy val root = (project in file("."))
       }
     },
     libraryDependencies ++= Seq(
-      "com.github.scala2ts" %% "scala2ts-core" % "1.0.0"
+      "com.github.scala2ts" %% "scala2ts-core"  % "1.0.3"
     ),
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
@@ -62,3 +62,9 @@ lazy val root = (project in file("."))
     publishTo := sonatypePublishToBundle.value,
     resolvers ++= Seq(DefaultMavenRepository)
   )
+
+/**
+ * So I guess plugins added to the root of the project's build.sbt
+ * are inherited by the consuming project? Works for me...
+ */
+addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.3")
