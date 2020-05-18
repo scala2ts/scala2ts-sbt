@@ -72,6 +72,7 @@ All configuration options are prefixed with `ts`.
 |NameSuffix| |A suffix to use in TS interface names|
 |DateMapping|AsDate|How to map Scala Dates to TS|
 |LongDoubleMapping|AsString|How to map Scala Longs and Doubles to TS|
+|SealedTypesMapping|None|Include an enum or type union of sealed traits/classes's members|
 |OutDir|target/typescript|Where to output files created during compilation|
 |OutFileName|index.ts|The name of the TS file to produce|
 |PackageJsonName| |The name of the project in package.json (must be supplied to emit package.json)|

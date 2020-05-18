@@ -13,6 +13,7 @@ import scala.util.matching.Regex
 import com.github.scala2ts.configuration.Configuration.Args._
 import com.github.scala2ts.configuration.DateMapping.DateMapping
 import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+import com.github.scala2ts.configuration.SealedTypesMapping.SealedTypesMapping
 
 object Scala2TSPlugin extends AutoPlugin {
   private[this] val pluginName: String = "scala2ts"
@@ -61,6 +62,9 @@ object Scala2TSPlugin extends AutoPlugin {
     val tsLongDoubleMapping   = settingKey[LongDoubleMapping](
       "How to transform Long(s) and Double(s) into Typescript"
     )
+    val tsSealedTypesMapping    = settingKey[SealedTypesMapping](
+      "Include either enum or type union declarations for sealed traits"
+    )
 
     val tsOutDir              = settingKey[String](
       "Directory path to emit Typescript file(s)"
@@ -88,7 +92,7 @@ object Scala2TSPlugin extends AutoPlugin {
   override lazy val projectSettings: Seq[Def.Setting[_]] =
     Seq(
       autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.6"),
+      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.7"),
       JsEngineKeys.parallelism := 1,
       libraryDependencies ++= Seq(
         "org.webjars.npm" % "typescript" % "3.8.3"
@@ -179,13 +183,19 @@ object Scala2TSPlugin extends AutoPlugin {
           val dateMappingArgs: Seq[String] = transformArg[DateMapping](
             dateMappingArg,
             tsDateMapping.?.value: @sbtUnchecked,
-            arg => s"${arg.id}",
+            arg => s"${arg.toString}"
           )
 
           val longDoubleMappingArgs: Seq[String] = transformArg[LongDoubleMapping](
             longDoubleMappingArg,
             tsLongDoubleMapping.?.value: @sbtUnchecked,
-            arg => s"${arg.id}"
+            arg => s"${arg.toString}"
+          )
+
+          val sealedTypesMappingArgs: Seq[String] = transformArg[SealedTypesMapping](
+            sealedTypesArg,
+            tsSealedTypesMapping.?.value: @sbtUnchecked,
+            arg => s"${arg.toString}"
           )
 
           val outDirArgs: Seq[String] = transformArg[String](
@@ -230,6 +240,7 @@ object Scala2TSPlugin extends AutoPlugin {
           typeNameSuffixArgs ++
           dateMappingArgs ++
           longDoubleMappingArgs ++
+          sealedTypesMappingArgs ++
           outDirArgs ++
           outFileNameArgs ++
           packageJsonNameArgs ++
