@@ -13,6 +13,7 @@ import scala.util.matching.Regex
 import com.github.scala2ts.configuration.Configuration.Args._
 import com.github.scala2ts.configuration.DateMapping.DateMapping
 import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+import com.github.scala2ts.configuration.RenderAs.RenderAs
 import com.github.scala2ts.configuration.SealedTypesMapping.SealedTypesMapping
 
 object Scala2TSPlugin extends AutoPlugin {
@@ -66,7 +67,7 @@ object Scala2TSPlugin extends AutoPlugin {
       "Include either enum or type union declarations for sealed traits"
     )
 
-    val tsIncludeClassDefinition  = settingKey[Boolean](
+    val tsRenderAs  = settingKey[RenderAs](
       "Include class definitions in addition to the interfaces"
     )
     val tsIncludeDiscriminator    = settingKey[Boolean](
@@ -102,7 +103,7 @@ object Scala2TSPlugin extends AutoPlugin {
   override lazy val projectSettings: Seq[Def.Setting[_]] =
     Seq(
       autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.8"),
+      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.9"),
       JsEngineKeys.parallelism := 1,
       libraryDependencies ++= Seq(
         "org.webjars.npm" % "typescript" % "3.8.3"
@@ -112,9 +113,6 @@ object Scala2TSPlugin extends AutoPlugin {
       },
       tsDebug := {
         tsDebug.??(false).value
-      },
-      tsIncludeClassDefinition := {
-        tsIncludeClassDefinition.??(false).value
       },
       tsIncludeDiscriminator := {
         tsIncludeDiscriminator.??(false).value
@@ -219,10 +217,10 @@ object Scala2TSPlugin extends AutoPlugin {
             arg => s"${arg.toString}"
           )
 
-          val includeClassDefinitionArgs: Seq[String] = transformArg[Boolean](
-            includeClassArg,
-            tsIncludeClassDefinition.?.value: @sbtUnchecked,
-            b => b.toString
+          val renderAsArgs: Seq[String] = transformArg[RenderAs](
+            renderAsArg,
+            tsRenderAs.?.value: @sbtUnchecked,
+            arg => s"${arg.toString}"
           )
 
           val includeDiscriminatorArgs: Seq[String] = transformArg[Boolean](
@@ -280,7 +278,7 @@ object Scala2TSPlugin extends AutoPlugin {
           dateMappingArgs ++
           longDoubleMappingArgs ++
           sealedTypesMappingArgs ++
-          includeClassDefinitionArgs ++
+          renderAsArgs ++
           includeDiscriminatorArgs ++
           discriminatorNameArgs ++
           outDirArgs ++
