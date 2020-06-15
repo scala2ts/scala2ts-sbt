@@ -66,6 +66,16 @@ object Scala2TSPlugin extends AutoPlugin {
       "Include either enum or type union declarations for sealed traits"
     )
 
+    val tsIncludeClassDefinition  = settingKey[Boolean](
+      "Include class definitions in addition to the interfaces"
+    )
+    val tsIncludeDiscriminator    = settingKey[Boolean](
+      "Include a type discriminator in your class definitions"
+    )
+    val tsDiscriminatorName       = settingKey[String](
+      "The name of the discriminator property"
+    )
+
     val tsOutDir              = settingKey[String](
       "Directory path to emit Typescript file(s)"
     )
@@ -92,7 +102,7 @@ object Scala2TSPlugin extends AutoPlugin {
   override lazy val projectSettings: Seq[Def.Setting[_]] =
     Seq(
       autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.7"),
+      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.8"),
       JsEngineKeys.parallelism := 1,
       libraryDependencies ++= Seq(
         "org.webjars.npm" % "typescript" % "3.8.3"
@@ -102,6 +112,15 @@ object Scala2TSPlugin extends AutoPlugin {
       },
       tsDebug := {
         tsDebug.??(false).value
+      },
+      tsIncludeClassDefinition := {
+        tsIncludeClassDefinition.??(false).value
+      },
+      tsIncludeDiscriminator := {
+        tsIncludeDiscriminator.??(false).value
+      },
+      tsDiscriminatorName := {
+        tsDiscriminatorName.??("type").value
       },
       tsIncludeFiles := {
         tsIncludeFiles.??(Seq()).value
@@ -131,6 +150,8 @@ object Scala2TSPlugin extends AutoPlugin {
             "true",
             "--listEmittedFiles",
             "true",
+            "--target",
+            "es6",
             s"${tsOutDir.value}/${tsOutFileName.value}"
           ),
           30 seconds,
@@ -198,9 +219,27 @@ object Scala2TSPlugin extends AutoPlugin {
             arg => s"${arg.toString}"
           )
 
+          val includeClassDefinitionArgs: Seq[String] = transformArg[Boolean](
+            includeClassArg,
+            tsIncludeClassDefinition.?.value: @sbtUnchecked,
+            b => b.toString
+          )
+
+          val includeDiscriminatorArgs: Seq[String] = transformArg[Boolean](
+            includeDiscriminatorArg,
+            tsIncludeDiscriminator.?.value: @sbtUnchecked,
+            b => b.toString
+          )
+
+          val discriminatorNameArgs: Seq[String] = transformArg[String](
+            discriminatorNameArg,
+            tsDiscriminatorName.?.value: @sbtUnchecked,
+            identity
+          )
+
           val outDirArgs: Seq[String] = transformArg[String](
             outDirArg,
-            tsOutDir.?.value.map(_.toString): @sbtUnchecked,
+            tsOutDir.?.value: @sbtUnchecked,
             identity
           )
 
@@ -241,6 +280,9 @@ object Scala2TSPlugin extends AutoPlugin {
           dateMappingArgs ++
           longDoubleMappingArgs ++
           sealedTypesMappingArgs ++
+          includeClassDefinitionArgs ++
+          includeDiscriminatorArgs ++
+          discriminatorNameArgs ++
           outDirArgs ++
           outFileNameArgs ++
           packageJsonNameArgs ++
