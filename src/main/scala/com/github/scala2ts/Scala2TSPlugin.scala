@@ -141,8 +141,8 @@ object Scala2TSPlugin extends AutoPlugin {
           state.value,
           JsEngineKeys.engineType.value,
           None,
-          (nodeModuleDirectories in Plugin).value.map(_.getPath),
-          ((nodeModuleDirectories in Plugin).value / "typescript" / "lib" / "tsc.js").get.head,
+          Seq((webJarsNodeModulesDirectory in Assets).value.getPath),
+          (webJarsNodeModulesDirectory in Assets).value / "typescript" / "lib" / "tsc.js",
           Seq(
             "--declaration",
             "true",
