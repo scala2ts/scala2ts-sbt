@@ -156,7 +156,8 @@ object Scala2TSPlugin extends AutoPlugin {
         )
         streams.value.log("Deleting original .ts file")
         new File(s"${tsOutDir.value}/${tsOutFileName.value}").delete()
-      }
+      },
+      tsTranspile := tsTranspile dependsOn nodeModules
     ) ++ inConfig(Compile)(Seq(
       scalacOptions ++= {
         if (tsEnable.value) {
