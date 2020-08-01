@@ -73,6 +73,9 @@ All configuration options are prefixed with `ts`.
 |DateMapping|AsDate|How to map Scala Dates to TS|
 |LongDoubleMapping|AsString|How to map Scala Longs and Doubles to TS|
 |SealedTypesMapping|None|Include an enum or type union of sealed traits/classes's members|
+|IncludeClassDefinition|false|Include class definitions based on built interfaces|
+|IncludeDiscriminator|false|Include a class property that acts as a discriminator|
+|DiscriminatorName|"type"|The name of the class discriminator property|
 |OutDir|target/typescript|Where to output files created during compilation|
 |OutFileName|index.ts|The name of the TS file to produce|
 |PackageJsonName| |The name of the project in package.json (must be supplied to emit package.json)|

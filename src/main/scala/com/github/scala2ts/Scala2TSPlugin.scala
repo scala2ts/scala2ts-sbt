@@ -13,6 +13,7 @@ import scala.util.matching.Regex
 import com.github.scala2ts.configuration.Configuration.Args._
 import com.github.scala2ts.configuration.DateMapping.DateMapping
 import com.github.scala2ts.configuration.LongDoubleMapping.LongDoubleMapping
+import com.github.scala2ts.configuration.RenderAs.RenderAs
 import com.github.scala2ts.configuration.SealedTypesMapping.SealedTypesMapping
 
 object Scala2TSPlugin extends AutoPlugin {
@@ -66,6 +67,16 @@ object Scala2TSPlugin extends AutoPlugin {
       "Include either enum or type union declarations for sealed traits"
     )
 
+    val tsRenderAs  = settingKey[RenderAs](
+      "Include class definitions in addition to the interfaces"
+    )
+    val tsIncludeDiscriminator    = settingKey[Boolean](
+      "Include a type discriminator in your class definitions"
+    )
+    val tsDiscriminatorName       = settingKey[String](
+      "The name of the discriminator property"
+    )
+
     val tsOutDir              = settingKey[String](
       "Directory path to emit Typescript file(s)"
     )
@@ -92,7 +103,7 @@ object Scala2TSPlugin extends AutoPlugin {
   override lazy val projectSettings: Seq[Def.Setting[_]] =
     Seq(
       autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.7"),
+      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.0.10"),
       JsEngineKeys.parallelism := 1,
       libraryDependencies ++= Seq(
         "org.webjars.npm" % "typescript" % "3.8.3"
@@ -102,6 +113,12 @@ object Scala2TSPlugin extends AutoPlugin {
       },
       tsDebug := {
         tsDebug.??(false).value
+      },
+      tsIncludeDiscriminator := {
+        tsIncludeDiscriminator.??(false).value
+      },
+      tsDiscriminatorName := {
+        tsDiscriminatorName.??("type").value
       },
       tsIncludeFiles := {
         tsIncludeFiles.??(Seq()).value
@@ -124,20 +141,23 @@ object Scala2TSPlugin extends AutoPlugin {
           state.value,
           JsEngineKeys.engineType.value,
           None,
-          (nodeModuleDirectories in Plugin).value.map(_.getPath),
-          ((nodeModuleDirectories in Plugin).value / "typescript" / "lib" / "tsc.js").get.head,
+          Seq((webJarsNodeModulesDirectory in Assets).value.getPath),
+          (webJarsNodeModulesDirectory in Assets).value / "typescript" / "lib" / "tsc.js",
           Seq(
             "--declaration",
             "true",
             "--listEmittedFiles",
             "true",
+            "--lib",
+            "es6,esnext",
             s"${tsOutDir.value}/${tsOutFileName.value}"
           ),
           30 seconds,
         )
         streams.value.log("Deleting original .ts file")
         new File(s"${tsOutDir.value}/${tsOutFileName.value}").delete()
-      }
+      },
+      tsTranspile := tsTranspile dependsOn nodeModules
     ) ++ inConfig(Compile)(Seq(
       scalacOptions ++= {
         if (tsEnable.value) {
@@ -198,9 +218,27 @@ object Scala2TSPlugin extends AutoPlugin {
             arg => s"${arg.toString}"
           )
 
+          val renderAsArgs: Seq[String] = transformArg[RenderAs](
+            renderAsArg,
+            tsRenderAs.?.value: @sbtUnchecked,
+            arg => s"${arg.toString}"
+          )
+
+          val includeDiscriminatorArgs: Seq[String] = transformArg[Boolean](
+            includeDiscriminatorArg,
+            tsIncludeDiscriminator.?.value: @sbtUnchecked,
+            b => b.toString
+          )
+
+          val discriminatorNameArgs: Seq[String] = transformArg[String](
+            discriminatorNameArg,
+            tsDiscriminatorName.?.value: @sbtUnchecked,
+            identity
+          )
+
           val outDirArgs: Seq[String] = transformArg[String](
             outDirArg,
-            tsOutDir.?.value.map(_.toString): @sbtUnchecked,
+            tsOutDir.?.value: @sbtUnchecked,
             identity
           )
 
@@ -241,6 +279,9 @@ object Scala2TSPlugin extends AutoPlugin {
           dateMappingArgs ++
           longDoubleMappingArgs ++
           sealedTypesMappingArgs ++
+          renderAsArgs ++
+          includeDiscriminatorArgs ++
+          discriminatorNameArgs ++
           outDirArgs ++
           outFileNameArgs ++
           packageJsonNameArgs ++
