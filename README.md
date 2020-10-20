@@ -6,6 +6,7 @@ takes a variety of Scala constructs and emits Typescript-compliant code.
 Currently handles:
 * Case Classes
 * Sealed Trait Hierarchies
+* General Traits
 * Generics
 * Primitives
 * Collections/Map
@@ -18,6 +19,7 @@ Currently handles:
 
 |**Version**|**SBT**|**Scala**|
 |---|---|---|
+|1.1.x|1.x|2.13<br />2.12<br />2.11|
 |1.0.x|1.x|2.13<br />2.12<br />2.11|
 
 ## Usage
@@ -25,7 +27,7 @@ Currently handles:
 ```sbt
 // project/plugins.sbt
 
-addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.0.5")
+addSbtPlugin("com.github.scala2ts" % "scala2ts-sbt" % "1.1.0")
 ```
 
 ```sbt
