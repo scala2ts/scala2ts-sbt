@@ -22,7 +22,7 @@ lazy val root = (project in file("."))
       }
     },
     libraryDependencies ++= Seq(
-      "com.github.scala2ts" %% "scala2ts-core"  % "1.1.0"
+      "com.github.scala2ts" %% "scala2ts-core"  % "1.1.1"
     ),
     releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
