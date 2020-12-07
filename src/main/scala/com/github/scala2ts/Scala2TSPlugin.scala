@@ -103,7 +103,7 @@ object Scala2TSPlugin extends AutoPlugin {
   override lazy val projectSettings: Seq[Def.Setting[_]] =
     Seq(
       autoCompilerPlugins := true,
-      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.1.2"),
+      addCompilerPlugin("com.github.scala2ts" %% "scala2ts-core" % "1.1.3"),
       JsEngineKeys.parallelism := 1,
       libraryDependencies ++= Seq(
         "org.webjars.npm" % "typescript" % "3.8.3"
