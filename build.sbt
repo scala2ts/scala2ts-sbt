@@ -8,7 +8,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "scala2ts-sbt",
     organization := "com.github.scala2ts",
-    scalaVersion := "2.12.11",
+    scalaVersion := "2.12.13",
     sbtPlugin := true,
     crossVersion := CrossVersion.binary,
     crossScalaVersions := Seq(
