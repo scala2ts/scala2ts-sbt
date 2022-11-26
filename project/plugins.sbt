@@ -1,6 +1,6 @@
 logLevel := Level.Debug
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.4")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.15")
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
 
