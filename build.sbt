@@ -67,4 +67,4 @@ lazy val root = (project in file("."))
  * So I guess plugins added to the root of the project's build.sbt
  * are inherited by the consuming project? Works for me...
  */
-addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.3")
+addSbtPlugin("com.github.sbt" % "sbt-js-engine" % "1.3.1")
