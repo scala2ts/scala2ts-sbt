@@ -15,7 +15,7 @@ lazy val root = (project in file("."))
       // TODO: "2.10.7"
       scalaVersion.value
     ),
-    sbtVersion in pluginCrossBuild := {
+    (pluginCrossBuild / sbtVersion) := {
       scalaBinaryVersion.value match {
         case "2.10" => "0.13.18"
         case "2.12" => "1.3.10"
